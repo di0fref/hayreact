@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import Pill from "./Pill";
-import { formatDate } from "./utils";
+import {API, formatDate} from "./utils";
 
-export default function BaleTable({ bales, updateBale, refreshBales }) {
+export default function BaleTable({ bales, refreshBales }) {
     const [edit, setEdit] = useState({ id: null, field: null });
     const [openDropdown, setOpenDropdown] = useState(null);
 
@@ -29,7 +29,14 @@ export default function BaleTable({ bales, updateBale, refreshBales }) {
         await fetch(`http://localhost:4000/api/bale-image/${baleId}`, { method: "DELETE" });
         await refreshBales(); // reload just the bales
     };
-
+    const updateBale = async (id, data) => {
+        await fetch(`${API}/bales/${id}`, {
+            method: "PUT",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(data),
+        });
+        await refreshBales(); // reload just the bales
+    };
 
     return (
         <div className="bg-white shadow-md rounded-2xl overflow-hidden border border-gray-100">
@@ -78,7 +85,7 @@ export default function BaleTable({ bales, updateBale, refreshBales }) {
                                         key={f}
                                         className={`relative group px-4 py-3 text-center transition ${
                                             isWarm ? "bg-red-50" : ""
-                                        } ${isEditable ? "cursor-pointer hover:text-blue-600" : "opacity-60 cursor-not-allowed"}`}
+                                        } ${isEditable ? "cursor-pointer hover:text-blue-600" : "_opacity-60 cursor-not-allowed"}`}
                                         onClick={() => isEditable && setEdit({ id: b.id, field: f })}
                                     >
                                         {/* Tooltip */}
@@ -116,8 +123,8 @@ export default function BaleTable({ bales, updateBale, refreshBales }) {
                                                             : "text-gray-800"
                                                 }`}
                                             >
-          {formatDate(b[f])}
-        </span>
+                                      {formatDate(b[f])}
+                                    </span>
                                         )}
                                     </td>
                                 );
@@ -161,12 +168,15 @@ export default function BaleTable({ bales, updateBale, refreshBales }) {
 
                             {/* Menu */}
                             <td className="px-4 py-3 text-center relative">
-          <span
-              className="text-blue-600 hover:underline cursor-pointer"
-              onClick={() => setOpenDropdown(openDropdown === b.id ? null : b.id)}
-          >
-            Menu
-          </span>
+                                  <span
+                                      className="text-blue-600 hover:underline cursor-pointer"
+                                      onClick={() => {
+                                          console.log(openDropdown, b.id);
+                                          setOpenDropdown(openDropdown === b.id ? null : b.id)}
+                                        }
+                                  >
+                                    Menu
+                                  </span>
                                 {openDropdown === b.id && (
                                     <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-100 rounded-xl shadow-lg text-left z-10">
                                         {[
