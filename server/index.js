@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS bales (
   warmDate TEXT
 );
 `);
+ensureColumn("bales", "imagePath", "TEXT");
 
 
 // --- Routes ---
@@ -113,6 +114,23 @@ app.delete("/api/invoice/:deliveryId", (req, res) => {
   }
   db.prepare("UPDATE deliveries SET invoicePath=NULL WHERE id=?").run(req.params.deliveryId);
   res.sendStatus(200);
+});
+
+// --- Bale image upload ---
+app.post("/api/bale-image/:baleId", upload.single("file"), (req, res) => {
+    if (!req.file) return res.status(400).send("No file uploaded");
+    const filePath = `/uploads/${req.file.filename}`;
+    db.prepare("UPDATE bales SET imagePath=? WHERE id=?").run(filePath, req.params.baleId);
+    res.json({ path: filePath });
+});
+
+app.delete("/api/bale-image/:baleId", (req, res) => {
+    const row = db.prepare("SELECT imagePath FROM bales WHERE id=?").get(req.params.baleId);
+    if (row?.imagePath) {
+        try { fs.unlinkSync(path.join(__dirname, row.imagePath)); } catch {}
+    }
+    db.prepare("UPDATE bales SET imagePath=NULL WHERE id=?").run(req.params.baleId);
+    res.sendStatus(200);
 });
 
 app.listen(4000, () => console.log("✅ Server running on http://localhost:4000"));
